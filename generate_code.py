@@ -57,7 +57,7 @@ def read_excel_and_generate_code(file_path):
             if cell.value and isinstance(cell.value, str) and cell.value.startswith('='):
                 formulas[cell.coordinate] = cell.value
 
-    # 1️⃣ Generate calculate() function block
+    # 1️⃣ Generate calculate() logic block
     logic_lines = []
     python_code = "def calculate(data):\n"
     for coord, formula in formulas.items():
@@ -73,7 +73,6 @@ def read_excel_and_generate_code(file_path):
     # 2️⃣ Generate full runnable script
     full_script = (
         "import pandas as pd\n\n"
-        "# Sample data (replace with real input)\n"
         "data = pd.DataFrame({\n"
         "    'A': [101, 102, 103],\n"
         "    'B': ['Alice', 'Bob', 'Carol'],\n"
@@ -89,8 +88,8 @@ def read_excel_and_generate_code(file_path):
     with open("generated_full_code.py", "w") as f:
         f.write(full_script)
 
-    print("✅ Python function written to 'generated_logic.py'")
-    print("✅ Full executable script written to 'generated_full_code.py'")
+    print("✅ generated_logic.py created")
+    print("✅ generated_full_code.py created")
 
 # Example usage:
 # read_excel_and_generate_code("your_excel_file.xlsx")
