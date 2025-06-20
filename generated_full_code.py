@@ -1,30 +1,14 @@
-# 📁 generated_full_code.py
+import pandas as pd
 
-def generate_full_python_code(file_path, sheet_name):
-    code = f"""import pandas as pd
+def generate_full_python_code(excel_file, sheet_name):
+    # Read Excel content into DataFrame
+    data = pd.read_excel(excel_file, sheet_name=sheet_name)
 
-# 📥 Load Excel data
-data = pd.read_excel("{file_path}", sheet_name="{sheet_name}")
+    # Load and execute generated logic
+    with open("generated_logic.py", "r") as f:
+        logic_code = f.read()
+        exec(logic_code, globals())  # Defines `calculate()` in global scope
 
-"""
-
-    try:
-        with open("generated_logic.py", "r") as f:
-            logic = f.read()
-
-        code += "# 🧠 Injected Logic from Excel formulas\n"
-        code += logic + "\n"
-
-        code += """\n
-# ▶️ Run the logic
-try:
+    # Now call the dynamically created calculate function
     result = calculate(data)
-    print(result)
-except Exception as e:
-    print("❌ Error during execution:", e)
-"""
-
-    except Exception as e:
-        code += f"# ⚠️ Could not read generated_logic.py: {e}"
-
-    return code
+    return result
