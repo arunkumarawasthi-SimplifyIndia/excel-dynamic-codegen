@@ -1,3 +1,4 @@
+# 📁 app.py
 import streamlit as st
 import pandas as pd
 import io
@@ -19,31 +20,54 @@ if uploaded_file:
     with open(file_path, "wb") as f:
         f.write(uploaded_file.read())
 
-    # Step 1: Display sheet preview
-    df = pd.read_excel(file_path)
+    # Step 1: Show sheet names
+    wb = load_workbook(file_path, data_only=False)
+    sheetnames = wb.sheetnames
+    selected_sheet = st.selectbox("📑 Select worksheet to analyze", sheetnames)
+
+    # Step 2: Preview selected sheet
+    df = pd.read_excel(file_path, sheet_name=selected_sheet)
     st.subheader("📊 Excel Preview")
     st.dataframe(df)
 
-    # Step 2: Generate real Python logic based on formulas
-    read_excel_and_generate_code(file_path)
+    # Step 3: Run code generation from selected sheet only
+    def extract_formulas_from_sheet(path, sheet):
+        wb = load_workbook(path, data_only=False)
+        ws = wb[sheet]
+        formulas = {}
+        for row in ws.iter_rows():
+            for cell in row:
+                if isinstance(cell.value, str) and cell.value.startswith("="):
+                    formulas[cell.coordinate] = cell.value
+        return formulas
 
-    # Step 3: Load and display generated code
-    with open("generated_logic.py", "r") as f:
-        python_code = f.read()
+    formulas = extract_formulas_from_sheet(file_path, selected_sheet)
+    st.subheader("📐 Extracted Formulas")
+    st.json(formulas)
+
+    # Generate Python logic file based on selected formulas
+    from generate_code import convert_formula_to_python
+
+    python_code = "def calculate(data):\n"
+    for coord, formula in formulas.items():
+        logic = convert_formula_to_python(formula)
+        for line in logic.split("\n"):
+            python_code += f"    {line}\n"
+    python_code += "    return data\n"
+
+    with open("generated_logic.py", "w") as f:
+        f.write(python_code)
 
     st.subheader("🛠️ Generated Python Code")
     st.code(python_code, language='python')
 
-    # Step 4: Execute the function and show results
     if st.button("▶️ Run Code and Show Output"):
         try:
             spec = importlib.util.spec_from_file_location("generated_logic", "generated_logic.py")
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             result = module.calculate(df)
-
             st.subheader("📤 Output after Python Logic")
             st.dataframe(result)
-
         except Exception as e:
             st.error(f"❌ Error while executing generated code: {e}")
