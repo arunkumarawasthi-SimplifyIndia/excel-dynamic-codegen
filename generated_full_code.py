@@ -7,17 +7,24 @@ def generate_full_python_code(file_path, sheet_name):
 data = pd.read_excel("{file_path}", sheet_name="{sheet_name}")
 
 """
-    # Append the generated logic from file
     try:
         with open("generated_logic.py", "r") as f:
             logic = f.read()
+
+        # Add the function logic
         code += "\n" + logic + "\n"
+
+        # Dynamically run the calculate function
         code += """
 # ▶️ Run calculation
-result = calculate(data)
-print(result)
+try:
+    result = calculate(data)
+    print(result)
+except Exception as e:
+    print("❌ Error while executing generated logic:", e)
 """
+
     except Exception as e:
-        code += f"\n# ⚠️ Error loading generated logic: {e}\n"
+        code += f"# ⚠️ Could not load logic: {e}\n"
 
     return code
