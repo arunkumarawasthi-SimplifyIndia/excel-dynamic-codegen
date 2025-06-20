@@ -1,14 +1,10 @@
 import pandas as pd
 
-data = pd.DataFrame({
-    'A': [101, 102, 103],
-    'B': ['Alice', 'Bob', 'Carol'],
-    'C': [50000, 60000, 55000]
-})
+# 🔁 Replace with your own Excel file and sheet name
+data = pd.read_excel("your_excel_file.xlsx", sheet_name="Sheet1")
 
 def calculate(data):
-    # generated logic
-    ...
+    ...  # formula logic
     return data
 
 result = calculate(data)
