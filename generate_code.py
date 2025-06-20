@@ -46,10 +46,10 @@ def convert_formula_to_python(formula):
 
     return "# Unsupported formula"
 
-def read_excel_and_generate_code(file_path):
+def read_excel_and_generate_code(file_path, sheet_name):
     wb = load_workbook(filename=file_path, data_only=False)
-    sheet = wb.active
-    df = pd.read_excel(file_path)
+    sheet = wb[sheet_name]
+    df = pd.read_excel(file_path, sheet_name=sheet_name)
 
     formulas = {}
     for row in sheet.iter_rows():
@@ -70,14 +70,10 @@ def read_excel_and_generate_code(file_path):
     with open("generated_logic.py", "w") as f:
         f.write(python_code)
 
-    # 2️⃣ Generate full runnable script
+    # 2️⃣ Generate full runnable script using actual file and sheet name
     full_script = (
         "import pandas as pd\n\n"
-        "data = pd.DataFrame({\n"
-        "    'A': [101, 102, 103],\n"
-        "    'B': ['Alice', 'Bob', 'Carol'],\n"
-        "    'C': [50000, 60000, 55000]\n"
-        "})\n\n"
+        f"data = pd.read_excel(\"{file_path}\", sheet_name=\"{sheet_name}\")\n\n"
         "def calculate(data):\n"
         f"{chr(10).join(logic_lines)}\n"
         "    return data\n\n"
@@ -89,7 +85,7 @@ def read_excel_and_generate_code(file_path):
         f.write(full_script)
 
     print("✅ generated_logic.py created")
-    print("✅ generated_full_code.py created")
+    print("✅ generated_full_code.py created (with correct file & sheet reference)")
 
 # Example usage:
-# read_excel_and_generate_code("your_excel_file.xlsx")
+# read_excel_and_generate_code("uploaded_excel.xlsx", "FormulaExamples")
