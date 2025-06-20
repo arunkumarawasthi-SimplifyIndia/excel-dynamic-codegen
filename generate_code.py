@@ -1,4 +1,3 @@
-# 📁 generate_code.py
 import pandas as pd
 from openpyxl import load_workbook
 import re
@@ -57,7 +56,7 @@ def read_excel_and_generate_code(file_path, sheet_name):
             if cell.value and isinstance(cell.value, str) and cell.value.startswith('='):
                 formulas[cell.coordinate] = cell.value
 
-    # 1️⃣ Generate calculate() logic block
+    # Build the calculate() logic
     logic_lines = []
     python_code = "def calculate(data):\n"
     for coord, formula in formulas.items():
@@ -70,10 +69,8 @@ def read_excel_and_generate_code(file_path, sheet_name):
     with open("generated_logic.py", "w") as f:
         f.write(python_code)
 
-    # 2️⃣ Generate full runnable script using actual file and sheet name
+    # Full code assumes `data` is passed externally (no file path, no sheet name)
     full_script = (
-        "import pandas as pd\n\n"
-        f"data = pd.read_excel(\"{file_path}\", sheet_name=\"{sheet_name}\")\n\n"
         "def calculate(data):\n"
         f"{chr(10).join(logic_lines)}\n"
         "    return data\n\n"
@@ -85,7 +82,4 @@ def read_excel_and_generate_code(file_path, sheet_name):
         f.write(full_script)
 
     print("✅ generated_logic.py created")
-    print("✅ generated_full_code.py created (with correct file & sheet reference)")
-
-# Example usage:
-# read_excel_and_generate_code("uploaded_excel.xlsx", "FormulaExamples")
+    print("✅ generated_full_code.py created (clean, no file/sheet dependency)")
