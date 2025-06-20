@@ -57,17 +57,40 @@ def read_excel_and_generate_code(file_path):
             if cell.value and isinstance(cell.value, str) and cell.value.startswith('='):
                 formulas[cell.coordinate] = cell.value
 
+    # 1️⃣ Generate calculate() function block
+    logic_lines = []
     python_code = "def calculate(data):\n"
     for coord, formula in formulas.items():
         logic = convert_formula_to_python(formula)
         for line in logic.split("\n"):
             python_code += f"    {line}\n"
+            logic_lines.append(f"    {line}")
     python_code += "    return data\n"
 
     with open("generated_logic.py", "w") as f:
         f.write(python_code)
 
-    print("\n✅ Python code with real logic generated in 'generated_logic.py'.")
+    # 2️⃣ Generate full runnable script
+    full_script = (
+        "import pandas as pd\n\n"
+        "# Sample data (replace with real input)\n"
+        "data = pd.DataFrame({\n"
+        "    'A': [101, 102, 103],\n"
+        "    'B': ['Alice', 'Bob', 'Carol'],\n"
+        "    'C': [50000, 60000, 55000]\n"
+        "})\n\n"
+        "def calculate(data):\n"
+        f"{chr(10).join(logic_lines)}\n"
+        "    return data\n\n"
+        "result = calculate(data)\n"
+        "print(result)\n"
+    )
+
+    with open("generated_full_code.py", "w") as f:
+        f.write(full_script)
+
+    print("✅ Python function written to 'generated_logic.py'")
+    print("✅ Full executable script written to 'generated_full_code.py'")
 
 # Example usage:
 # read_excel_and_generate_code("your_excel_file.xlsx")
