@@ -12,6 +12,24 @@ st.set_page_config(page_title="Excel → Python Code Generator", layout="wide")
 st.title("🧠 Excel to Dynamic Python Code Generator")
 
 uploaded_file = st.file_uploader("📁 Upload an Excel file", type=["xlsx", "xlsm"])
+import os
+from generate_code import read_excel_and_generate_code
+
+if uploaded_file is not None:
+    # Step 1: Save uploaded file to local temp directory
+    os.makedirs("temp_uploaded", exist_ok=True)
+    file_path = os.path.join("temp_uploaded", uploaded_file.name)
+    with open(file_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+
+    # Step 2: Load Excel to get sheet names
+    xls = pd.ExcelFile(file_path)
+    selected_sheet = st.selectbox("📑 Choose worksheet", xls.sheet_names)
+
+    # Step 3: Call the updated code generator with actual file + sheet name
+    if selected_sheet:
+        read_excel_and_generate_code(file_path, selected_sheet)
+        st.success("✅ Python code generated successfully from uploaded Excel + selected sheet.")
 
 if uploaded_file:
     st.success("✅ File uploaded successfully")
