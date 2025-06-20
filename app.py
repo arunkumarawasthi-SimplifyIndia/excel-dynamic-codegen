@@ -71,3 +71,16 @@ if uploaded_file:
             st.dataframe(result)
         except Exception as e:
             st.error(f"❌ Error while executing generated code: {e}")
+
+    # New Section: Full Generated Script
+    if os.path.exists("generated_full_code.py"):
+        st.subheader("📦 Full Generated Python Script")
+        with open("generated_full_code.py", "r") as f:
+            full_script = f.read()
+            st.code(full_script, language='python')
+            st.download_button(
+                label="📥 Download Full Python File",
+                data=full_script,
+                file_name="generated_full_code.py",
+                mime="text/x-python"
+            )
