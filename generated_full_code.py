@@ -1,21 +1,12 @@
-def generate_full_python_code(file_path, sheet_name):
-    try:
-        with open("generated_logic.py", "r") as f:
-            logic_code = f.read()
-    except Exception as e:
-        return f"# ❌ Could not read generated_logic.py: {e}"
+def calculate_logic(data):
+    match_row = data[data['A (Employee ID)'] == 102]
+    xlookup_result = match_row['B (Name)'].values[0] if not match_row.empty else 'Not Found'
+    data['XLOOKUP_Result'] = xlookup_result
 
-    # Create a standalone Python script
-    script = f"""import pandas as pd
+    offset_result = data.iloc[2, 1]
+    data['OFFSET_Result'] = offset_result
 
-# Load data from Excel
-data = pd.read_excel("{file_path}", sheet_name="{sheet_name}")
+    index_result = data['C (Salary)'].iloc[1]
+    data['INDEX_Result'] = index_result
 
-{logic_code}
-
-# Run the logic
-result = calculate(data)
-print(result)
-"""
-
-    return script
+    return data
