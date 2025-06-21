@@ -1,13 +1,13 @@
-
 import streamlit as st
 import pandas as pd
-import base64
 from io import BytesIO
+from PIL import Image
 from generated_full_code import calculate_logic
 
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="Excel to Dynamic Python Code Generator", layout="wide")
 
-col1, col2, col3 = st.columns([1, 3, 1])
+# Logo Display
+col1, col2, col3 = st.columns([1, 4, 1])
 with col1:
     st.image("simplify_logo.png", width=100)
 with col3:
@@ -17,18 +17,20 @@ st.markdown("## 🧠 Excel to Dynamic Python Code Generator")
 uploaded_file = st.file_uploader("📂 Upload an Excel file", type=["xlsx", "xlsm"])
 
 if uploaded_file:
-    xls = pd.ExcelFile(uploaded_file)
-    sheet_name = st.selectbox("Select Sheet", xls.sheet_names)
-    df = pd.read_excel(xls, sheet_name)
+    df_sheets = pd.read_excel(uploaded_file, sheet_name=None)
+    sheet_names = list(df_sheets.keys())
+    selected_sheet = st.selectbox("Select Sheet", sheet_names)
+
+    df = df_sheets[selected_sheet]
     st.success("File uploaded and previewed successfully")
-    st.subheader("📊 Excel Preview")
+    st.markdown("### 📊 Excel Preview")
     st.dataframe(df)
 
     if st.button("▶️ Run Code and Show Output"):
         try:
-            result = calculate_logic(df)
+            result = calculate_logic(df.copy())
             st.success("Code executed successfully.")
-            st.subheader("🧾 Output Data")
+            st.markdown("### 📋 Output Data")
             st.dataframe(result)
         except Exception as e:
-            st.error(f"❌ Error executing logic: {str(e)}")
+            st.error(f"❌ Error executing logic: {e}")
