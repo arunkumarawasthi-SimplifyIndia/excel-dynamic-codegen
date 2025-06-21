@@ -1,6 +1,6 @@
-def calculate_logic(data):
+def calculate(data):
     match_row = data[data['A'] == 102]
-    xlookup_result = match_row['B'].values[0] if not match_row.empty else 'Not Found'
+    xlookup_result = match_row['B'].values[0] if not match_row.empty else "Not Found"
     data['XLOOKUP_Result'] = xlookup_result
 
     offset_result = data.iloc[2, 1]

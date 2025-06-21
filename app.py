@@ -1,57 +1,73 @@
+# 📁 app.py
 
 import streamlit as st
 import pandas as pd
+from openpyxl import load_workbook
 import os
-from generate_code import generate_python_code
+from generate_code import read_excel_and_generate_code
+from generated_full_code import generate_full_python_code
 
-st.set_page_config(layout="wide", page_title="Excel to Dynamic Python Code Generator")
+st.set_page_config(page_title="Excel to Dynamic Python Code Generator", layout="centered")
 
-st.markdown("## 🧠 Excel to Dynamic Python Code Generator")
+col1, col2, col3 = st.columns([1, 4, 1])
+with col1:
+    st.image("simplify_logo.png", width=100)
+with col2:
+    st.title("Excel to Dynamic Python Code Generator")
+with col3:
+    st.image("edelweiss_logo.png", width=100)
+
+st.markdown("### 🧠 Excel to Dynamic Python Code Generator")
 
 uploaded_file = st.file_uploader("📂 Upload an Excel file", type=["xlsx", "xlsm"])
-sheet_name = None
+if uploaded_file is not None:
+    file_path = os.path.join("temp_uploaded", uploaded_file.name)
+    os.makedirs("temp_uploaded", exist_ok=True)
+    with open(file_path, "wb") as f:
+        f.write(uploaded_file.getvalue())
+    st.success("✅ File uploaded successfully")
+    
+    # Load workbook and sheet names
+    wb = load_workbook(file_path, data_only=False)
+    sheet_names = wb.sheetnames
+    selected_sheet = st.selectbox("📄 Select worksheet to process", sheet_names)
+    
+    # Preview selected worksheet
+    df = pd.read_excel(file_path, sheet_name=selected_sheet)
+    st.markdown("### 📊 Excel Preview")
+    st.dataframe(df)
 
-if uploaded_file:
-    try:
-        xl = pd.ExcelFile(uploaded_file)
-        sheet_name = st.selectbox("Select Sheet", xl.sheet_names)
-        df = xl.parse(sheet_name)
-        df.to_csv("temp_data.csv", index=False)
-        st.success("✅ File uploaded and previewed successfully")
-        st.markdown("### 📊 Excel Preview")
-        st.dataframe(df)
-    except Exception as e:
-        st.error(f"Error reading file: {e}")
-
-    with open("generated_logic.py", "w") as f:
-        f.write(generate_python_code(df))
-
-    with open("generated_logic.py", "r") as f:
-        generated_code = f.read()
-
+    # Generate and display logic code
     st.markdown("### 🛠️ Generated Python Code")
-    st.code(generated_code, language="python")
+    read_excel_and_generate_code(file_path, selected_sheet)
+    try:
+        with open("generated_logic.py", "r") as f:
+            logic_code = f.read()
+            st.code(logic_code, language="python")
+    except Exception as e:
+        st.error(f"❌ Could not read generated logic: {e}")
 
-    full_script = f"""
-import pandas as pd
-
-data = pd.read_csv('temp_data.csv')
-
-{generated_code}
-
-result = calculate_logic(data)
-print(result)
-"""
-    with open("generated_full_code.py", "w") as f:
-        f.write(full_script)
-
+    # Generate and display full script
     st.markdown("### 📦 Full Generated Python Script")
-    st.code(full_script, language="python")
+    full_code = generate_full_python_code(file_path, selected_sheet)
+    st.code(full_code, language="python")
 
-    if st.button("▶️ Run Code and Show Output"):
-        try:
-            from generated_full_code import calculate_logic
-            result = calculate_logic(df)
-            st.write(result)
-        except Exception as e:
-            st.error(f"❌ Error executing logic: {e}")
+    st.download_button(
+        label="⬇️ Download Full Python File",
+        data=full_code,
+        file_name="generated_script.py",
+        mime="text/x-python"
+    )
+
+    # Run logic
+st.markdown("### ▶️ Run Code and Show Output")
+try:
+    with open("generated_logic.py", "r") as f:
+        logic = f.read()
+        exec(logic, globals())  # Define calculate()
+
+    result_df = calculate(df.copy())
+    st.markdown("### 📂 Output after Python Logic")
+    st.dataframe(result_df)
+except Exception as e:
+    st.error(f"❌ Error executing logic: {e}")
