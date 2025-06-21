@@ -60,11 +60,14 @@ if uploaded_file is not None:
     )
 
     # Run logic
-    st.markdown("### ▶️ Run Code and Show Output")
-    try:
-        from generated_logic import calculate
-        output_df = calculate(df.copy())
-        st.markdown("### 📂 Output after Python Logic")
-        st.dataframe(output_df)
-    except Exception as e:
-        st.error(f"❌ Error executing logic: {e}")
+st.markdown("### ▶️ Run Code and Show Output")
+try:
+    with open("generated_logic.py", "r") as f:
+        logic = f.read()
+        exec(logic, globals())  # Define calculate()
+
+    result_df = calculate(df.copy())
+    st.markdown("### 📂 Output after Python Logic")
+    st.dataframe(result_df)
+except Exception as e:
+    st.error(f"❌ Error executing logic: {e}")
