@@ -1,9 +1,6 @@
-# 📁 app.py
-
 import streamlit as st
 import pandas as pd
 from openpyxl import load_workbook
-import os
 from generate_code import read_excel_and_generate_code
 from generated_full_code import generate_full_python_code
 
@@ -20,54 +17,36 @@ with col3:
 st.markdown("### 🧠 Excel to Dynamic Python Code Generator")
 
 uploaded_file = st.file_uploader("📂 Upload an Excel file", type=["xlsx", "xlsm"])
+
 if uploaded_file is not None:
-    file_path = os.path.join("temp_uploaded", uploaded_file.name)
-    os.makedirs("temp_uploaded", exist_ok=True)
+    file_path = f"temp_uploaded/{uploaded_file.name}"
     with open(file_path, "wb") as f:
-        f.write(uploaded_file.getvalue())
-    st.success("✅ File uploaded successfully")
-    
-    # Load workbook and sheet names
-    wb = load_workbook(file_path, data_only=False)
-    sheet_names = wb.sheetnames
-    selected_sheet = st.selectbox("📄 Select worksheet to process", sheet_names)
-    
-    # Preview selected worksheet
-    df = pd.read_excel(file_path, sheet_name=selected_sheet)
-    st.markdown("### 📊 Excel Preview")
+        f.write(uploaded_file.read())
+
+    df = pd.read_excel(file_path)
+    st.success("✅ File uploaded and previewed successfully")
+    st.subheader("📊 Excel Preview")
     st.dataframe(df)
 
-    # Generate and display logic code
-    st.markdown("### 🛠️ Generated Python Code")
-    read_excel_and_generate_code(file_path, selected_sheet)
-    try:
-        with open("generated_logic.py", "r") as f:
-            logic_code = f.read()
-            st.code(logic_code, language="python")
-    except Exception as e:
-        st.error(f"❌ Could not read generated logic: {e}")
+    # Generate code logic
+    read_excel_and_generate_code(file_path)
 
-    # Generate and display full script
-    st.markdown("### 📦 Full Generated Python Script")
-    full_code = generate_full_python_code(file_path, selected_sheet)
-    st.code(full_code, language="python")
+    # Display generated logic
+    st.subheader("🛠️ Generated Python Code")
+    with open("generated_logic.py", "r") as f:
+        st.code(f.read(), language="python")
 
-    st.download_button(
-        label="⬇️ Download Full Python File",
-        data=full_code,
-        file_name="generated_script.py",
-        mime="text/x-python"
-    )
+    # Display full runnable Python code
+    st.subheader("📦 Full Generated Python Script")
+    full_script = generate_full_python_code(file_path, df.columns[0])  # Use first sheet or update logic as needed
+    st.code(full_script, language="python")
+    st.download_button("📥 Download Full Python File", full_script, file_name="generated_code.py")
 
-    # Run logic (✓ FIXED: properly indented under uploaded_file block)
+    # Run logic and show output
     st.markdown("### ▶️ Run Code and Show Output")
     try:
-        with open("generated_logic.py", "r") as f:
-            logic = f.read()
-            exec(logic, globals())  # defines calculate()
-
-        result_df = generate_full_python_code(df)
-        st.markdown("### 📂 Output after Python Logic")
-        st.dataframe(result_df)
+        from generated_logic import calculate
+        output_df = calculate(df)
+        st.dataframe(output_df)
     except Exception as e:
         st.error(f"❌ Error executing logic: {e}")

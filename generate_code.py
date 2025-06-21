@@ -45,10 +45,10 @@ def convert_formula_to_python(formula):
 
     return "# Unsupported formula"
 
-def read_excel_and_generate_code(file_path, sheet_name):
+def read_excel_and_generate_code(file_path):
     wb = load_workbook(filename=file_path, data_only=False)
-    sheet = wb[sheet_name]
-    df = pd.read_excel(file_path, sheet_name=sheet_name)
+    sheet = wb.active
+    df = pd.read_excel(file_path)
 
     formulas = {}
     for row in sheet.iter_rows():
@@ -56,30 +56,12 @@ def read_excel_and_generate_code(file_path, sheet_name):
             if cell.value and isinstance(cell.value, str) and cell.value.startswith('='):
                 formulas[cell.coordinate] = cell.value
 
-    # Build the calculate() logic
-    logic_lines = []
     python_code = "def calculate(data):\n"
     for coord, formula in formulas.items():
         logic = convert_formula_to_python(formula)
         for line in logic.split("\n"):
             python_code += f"    {line}\n"
-            logic_lines.append(f"    {line}")
     python_code += "    return data\n"
 
     with open("generated_logic.py", "w") as f:
         f.write(python_code)
-
-    # Full code assumes `data` is passed externally (no file path, no sheet name)
-    full_script = (
-        "def calculate(data):\n"
-        f"{chr(10).join(logic_lines)}\n"
-        "    return data\n\n"
-        "result = calculate(data)\n"
-        "print(result)\n"
-    )
-
-    with open("generated_full_code.py", "w") as f:
-        f.write(full_script)
-
-    print("✅ generated_logic.py created")
-    print("✅ generated_full_code.py created (clean, no file/sheet dependency)")
