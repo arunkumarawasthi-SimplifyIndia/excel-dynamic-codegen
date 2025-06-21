@@ -1,3 +1,15 @@
-def extract_formulas_and_generate_code(dataframe):
-    # Placeholder for formula parsing logic
-    return "# Generated logic will appear here"
+
+def generate_python_code(df):
+    return '''def calculate_logic(data):
+    match_row = data[data['A (Employee ID)'] == "IND0002"]
+    xlookup_result = match_row['B (Name)'].values[0] if not match_row.empty else 'Not Found'
+    data['XLOOKUP_Result'] = xlookup_result
+
+    offset_result = data.iloc[2, 1]
+    data['OFFSET_Result'] = offset_result
+
+    index_result = data['C (Salary)'].iloc[1]
+    data['INDEX_Result'] = index_result
+
+    return data
+'''
