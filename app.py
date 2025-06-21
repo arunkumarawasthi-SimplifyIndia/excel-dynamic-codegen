@@ -66,7 +66,7 @@ if uploaded_file is not None:
             logic = f.read()
             exec(logic, globals())  # defines calculate()
 
-        result_df = calculate(df.copy())
+        result_df = generate_full_python_code(df)
         st.markdown("### 📂 Output after Python Logic")
         st.dataframe(result_df)
     except Exception as e:
