@@ -1,61 +1,39 @@
 import streamlit as st
 import pandas as pd
-from PIL import Image
+import os
+from generate_code import read_excel_and_generate_code
 
-st.set_page_config(page_title="Excel to Dynamic Python Code Generator", layout="wide")
+st.set_page_config(layout="wide")
 
-def load_logo(path):
-    try:
-        st.image(path, width=100)
-    except Exception:
-        st.warning(f"Failed to load {path}")
-
-# Logo and title
+# UI with logos
 col1, col2, col3 = st.columns([1, 5, 1])
 with col1:
-    load_logo("simplify_logo.png")
+    try: st.image("simplify_logo.png", width=100)
+    except: st.warning("Logo load failed")
 with col2:
     st.title("Excel to Dynamic Python Code Generator")
 with col3:
-    load_logo("edelweiss_logo.png")
+    try: st.image("edelweiss_logo.png", width=100)
+    except: st.warning("Logo load failed")
 
-uploaded_file = st.file_uploader("Upload Excel File (.xlsm or .xlsx)", type=["xlsm", "xlsx"])
+uploaded_file = st.file_uploader("Upload Excel file", type=["xlsm", "xlsx"])
 
 if uploaded_file:
-    xls = pd.ExcelFile(uploaded_file)
-    sheet_name = st.selectbox("Select Sheet", xls.sheet_names)
-    df = xls.parse(sheet_name)
+    with open("temp_uploaded_file.xlsx", "wb") as f:
+        f.write(uploaded_file.read())
 
-    st.subheader("📊 Excel Sheet Preview")
+    df = pd.read_excel("temp_uploaded_file.xlsx", sheet_name=0)
+    st.subheader("Excel Preview")
     st.dataframe(df)
 
-    if st.button("▶️ Run Logic and Show Output"):
-        try:
-            def calculate_logic(df):
-                if 'A (Employee ID)' in df.columns:
-                    df['A (Employee ID)'] = df['A (Employee ID)'].astype(str)
-                if 'B (Name)' in df.columns:
-                    df['XLOOKUP_Result'] = df['B (Name)'].fillna('Bob')
-                    df['OFFSET_Result'] = df['B (Name)'].shift(-1).fillna('Carol')
-                if 'C (Salary)' in df.columns:
-                    df['INDEX_Result'] = df['C (Salary)'].fillna(60000)
-                return df
+    if st.button("▶️ Generate Python Code"):
+        python_code = read_excel_and_generate_code("temp_uploaded_file.xlsx")
+        st.success("✅ Code generated successfully.")
+        st.subheader("🧠 Generated Python Code")
+        st.code(python_code, language="python")
 
-            result_df = calculate_logic(df.copy())
-            st.success("✅ Logic executed successfully.")
-            st.subheader("🔍 Output Data")
-            st.dataframe(result_df)
-
-            st.subheader("📜 Generated Python Code")
-            st.code('''def calculate_logic(df):
-    if 'A (Employee ID)' in df.columns:
-        df['A (Employee ID)'] = df['A (Employee ID)'].astype(str)
-    if 'B (Name)' in df.columns:
-        df['XLOOKUP_Result'] = df['B (Name)'].fillna('Bob')
-        df['OFFSET_Result'] = df['B (Name)'].shift(-1).fillna('Carol')
-    if 'C (Salary)' in df.columns:
-        df['INDEX_Result'] = df['C (Salary)'].fillna(60000)
-    return df''', language='python')
-
-        except Exception as e:
-            st.error(f"Error in logic: {e}")
+    if os.path.exists("generated_logic.py") and st.button("▶️ Run Logic and Show Output"):
+        from generated_logic import calculate_logic
+        result = calculate_logic(df.copy())
+        st.subheader("✅ Output after applying logic")
+        st.dataframe(result)
