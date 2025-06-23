@@ -10,9 +10,15 @@ st.markdown("<h4 style='text-align: center; color: grey;'>Excel Upload and Formu
 # Optional logo bar
 logo_cols = st.columns([1, 6, 1])
 with logo_cols[0]:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/3/3f/Logo_OpenAI.svg", width=80)
+    try:
+        st.image("simplify_logo.png", width=90)
+    except:
+        st.markdown("🔴")
 with logo_cols[2]:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Python-logo-notext.svg/1024px-Python-logo-notext.svg.png", width=80)
+    try:
+        st.image("edelweiss_logo.png", width=90)
+    except:
+        st.markdown("🔵")
 
 uploaded_file = st.file_uploader("📁 Upload an Excel file", type=["xlsx", "xlsm"])
 
@@ -27,7 +33,7 @@ if uploaded_file:
     selected_sheet = st.selectbox("📑 Select a worksheet", sheet_names)
 
     # Load selected sheet as DataFrame
-    df = pd.read_excel(io.BytesIO(uploaded_bytes), sheet_name=selected_sheet)
+    df = pd.read_excel(io.BytesIO(uploaded_bytes), sheet_name=selected_sheet, dtype=str)
     df.columns = df.columns.astype(str).str.strip()
     df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
     df.fillna("", inplace=True)
@@ -62,6 +68,6 @@ if uploaded_file:
     if st.button("▶️ Run and Show Output"):
         exec_globals = {}
         exec(python_code, exec_globals)
-        result = exec_globals['calculate'](df)
+        result = exec_globals['calculate'](df.copy())
         st.subheader("📤 Output Data")
         st.dataframe(result, use_container_width=True)
