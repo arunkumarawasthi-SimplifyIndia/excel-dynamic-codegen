@@ -4,15 +4,14 @@ from openpyxl import load_workbook
 import io
 
 st.set_page_config(page_title="Step 1: Excel to Python Preview", layout="wide")
-st.title("🧠 Excel to Python Code Generator — Step 1")
+st.markdown("<h1 style='text-align: center;'>🧠 Excel to Python Code Generator — Step 1</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: grey;'>Excel Upload and Formula Reader</h4>", unsafe_allow_html=True)
 
-# Optional logo
-col1, col2, col3 = st.columns([1, 6, 1])
-with col1:
+# Optional logo bar
+logo_cols = st.columns([1, 6, 1])
+with logo_cols[0]:
     st.image("https://upload.wikimedia.org/wikipedia/commons/3/3f/Logo_OpenAI.svg", width=80)
-with col2:
-    st.markdown("<h3 style='text-align: center;'>Excel Upload and Formula Reader</h3>", unsafe_allow_html=True)
-with col3:
+with logo_cols[2]:
     st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Python-logo-notext.svg/1024px-Python-logo-notext.svg.png", width=80)
 
 uploaded_file = st.file_uploader("📁 Upload an Excel file", type=["xlsx", "xlsm"])
@@ -34,7 +33,7 @@ if uploaded_file:
     df.fillna("", inplace=True)
 
     st.subheader("📊 Sheet Preview")
-    st.dataframe(df)
+    st.dataframe(df, use_container_width=True)
 
     # Extract formulas
     formulas = {}
@@ -65,4 +64,4 @@ if uploaded_file:
         exec(python_code, exec_globals)
         result = exec_globals['calculate'](df)
         st.subheader("📤 Output Data")
-        st.dataframe(result)
+        st.dataframe(result, use_container_width=True)
