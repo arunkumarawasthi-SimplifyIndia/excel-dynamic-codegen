@@ -1,73 +1,73 @@
 
 import streamlit as st
 import pandas as pd
-from io import BytesIO
-import base64
-import openpyxl
-import re
+from openpyxl import load_workbook
+import io
 
-st.set_page_config(layout="wide")
-st.title("Excel to Python Code Generator (Jupyter-Compatible Output)")
+st.set_page_config(page_title="Excel → Python Code Generator", layout="wide")
+col1, col2, col3 = st.columns([1, 6, 1])
+with col1:
+    st.image("simplify_logo.png", width=100)
+with col2:
+    st.markdown("<h1 style='text-align: center;'>Excel to Dynamic Python Code Generator</h1>", unsafe_allow_html=True)
+with col3:
+    st.image("edelweiss_logo.png", width=100)
+st.title("🧠 Excel to Dynamic Python Code Generator")
 
-uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx", "xlsm"])
+uploaded_file = st.file_uploader("📁 Upload an Excel file", type=["xlsx", "xlsm"])
+
 if uploaded_file:
-    try:
-        in_memory_file = BytesIO(uploaded_file.read())
-        wb = openpyxl.load_workbook(in_memory_file, data_only=False)
-        sheet_names = wb.sheetnames
-        selected_sheet = st.selectbox("Choose a sheet", sheet_names)
-        ws = wb[selected_sheet]
+    st.success("✅ File uploaded successfully")
+    st.write("📍 Step 1: File received")
 
-        data_only_wb = openpyxl.load_workbook(BytesIO(uploaded_file.getvalue()), data_only=True)
-        df = pd.DataFrame(data_only_wb[selected_sheet].values)
-        st.subheader("Preview of Sheet Data")
+    uploaded_bytes = uploaded_file.read()
+    try:
+        wb = load_workbook(filename=io.BytesIO(uploaded_bytes), data_only=False, keep_vba=True)
+        st.write("📍 Step 2: Workbook loaded")
+
+        sheet_names = wb.sheetnames
+        st.write("📍 Step 3: Sheets found →", sheet_names)
+
+        selected_sheet = st.selectbox("📑 Select a worksheet", sheet_names)
+        df = pd.read_excel(io.BytesIO(uploaded_bytes), sheet_name=selected_sheet)
+        st.write("📍 Step 4: Sheet loaded")
+
+        df.columns = df.columns.str.strip()
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+        df.fillna("", inplace=True)
+
+        st.subheader(f"📊 Preview of '{selected_sheet}' Sheet")
         st.dataframe(df)
 
-        formula_lines = []
-        for row in ws.iter_rows():
+        sheet = wb[selected_sheet]
+        formulas = {}
+        for row in sheet.iter_rows():
             for cell in row:
-                if isinstance(cell.value, str) and cell.value.startswith("="):
-                    coord = cell.coordinate
-                    formula = cell.value
+                if cell.value and isinstance(cell.value, str) and cell.value.startswith('='):
+                    formulas[cell.coordinate] = cell.value
 
-                    if "INDEX" in formula:
-                        formula_lines.append(f"# Example translation of INDEX in {{coord}}")
-                        formula_lines.append(f"value_{{coord}} = df.iloc[1:4, 2].iloc[1]  # ← replace with parsed range")
-                    elif "OFFSET" in formula:
-                        formula_lines.append(f"# Example translation of OFFSET in {{coord}}")
-                        formula_lines.append(f"value_{{coord}} = df.iloc[2, 1]  # ← replace with parsed position")
-                    elif "XLOOKUP" in formula:
-                        formula_lines.append(f"# Example translation of XLOOKUP in {{coord}}")
-                        formula_lines.append(f"value_{{coord}} = df[df.iloc[:, 0] == 102].iloc[0, 1] if 102 in df.iloc[:, 0].values else 'Not Found'")
-                    else:
-                        formula_lines.append(f"# Could not parse formula in {{coord}}: {{formula}}")
+        st.subheader("🧮 Extracted Formulas")
+        if formulas:
+            st.json(formulas)
+        else:
+            st.info("No formulas found.")
 
-        full_code = """{template}\n{logic}\nprint(df.head())""".format(
-            template="""import pandas as pd
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
+        # Generate Python code
+        columns = df.columns.tolist()
+        python_code = "def calculate(data):\n"
+        for col in columns:
+            python_code += f"    data['{col}_processed'] = data['{col}']  # Placeholder logic\n"
+        python_code += "    return data"
 
-# Select file interactively
-Tk().withdraw()
-file_path = askopenfilename(title="Select your Excel file")
+        st.subheader("🛠️ Generated Python Code")
+        st.code(python_code, language='python')
 
-xls = pd.ExcelFile(file_path)
-print("Available Sheets:", xls.sheet_names)
-sheet_name = input("Enter sheet name to load: ")
-
-df = pd.read_excel(file_path, sheet_name=sheet_name)
-
-# Converted formula logic
-""",
-            logic="\n".join(formula_lines)
-        )
-
-        st.subheader("Generated Python Code (Jupyter Compatible)")
-        st.code(full_code, language="python")
-
-        b64 = base64.b64encode(full_code.encode()).decode()
-        href = f'<a href="data:file/txt;base64,{{b64}}" download="generated_code_jupyter.py">📥 Download Python Code</a>'
-        st.markdown(href, unsafe_allow_html=True)
+        if st.button("▶️ Run Code and Show Output"):
+            exec_globals = {}
+            exec(python_code, exec_globals)
+            processed_df = exec_globals['calculate'](df)
+            st.subheader("📤 Processed Output")
+            st.dataframe(processed_df)
 
     except Exception as e:
-        st.error(f"❌ Failed to process the Excel file: {{e}}")
+        st.error(f"❌ Error: {str(e)}")
